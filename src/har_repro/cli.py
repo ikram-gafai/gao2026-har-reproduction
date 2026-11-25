@@ -1,8 +1,11 @@
-"""Command-line entry points (Phase 1: data only, no model fitting).
+"""Command-line entry points.
 
     python -m har_repro.cli prepare-data [--local-archive PATH]
     python -m har_repro.cli build-mapping [--check]
     python -m har_repro.cli validate-data
+    python -m har_repro.cli run-experiments          (Phase 2: all pre-registered runs)
+    python -m har_repro.cli run-one --model M [--variant V] --seed N --out DIR
+    python -m har_repro.cli summarize
 """
 
 from __future__ import annotations
@@ -151,6 +154,91 @@ def cmd_validate_data(args: argparse.Namespace) -> int:
     return 0
 
 
+# ------------------------------------------------------------------------------------------ Phase 2 commands
+def load_dataset(args: argparse.Namespace):
+    """Load the dataset; verified against configured SHA-256 unless --allow-unverified-data (tests only)."""
+    from .data.acquire import IntegrityError
+    root = Path(args.data_root) if args.data_root else dataset_root()
+    try:
+        verify_extracted(root, load_data_sources()["expected"]["files"])
+        verified = True
+    except IntegrityError:
+        if not args.allow_unverified_data:
+            raise SystemExit(f"Dataset at {root} failed checksum verification; run prepare-data. "
+                             "(--allow-unverified-data exists for synthetic tests only.)")
+        verified = False
+    return load_uci_har(root), verified
+
+
+def _results_dir(args) -> Path:
+    return Path(args.results_dir) if args.results_dir else RESULTS_DIR
+
+
+def cmd_run_one(args: argparse.Namespace) -> int:
+    from .experiments.runner import RunSpec, execute_run
+    exp = load_experiment_config()
+    data, verified = load_dataset(args)
+    variant = args.variant if args.model == "compact100" else None
+    if args.model == "compact100" and variant is None:
+        raise SystemExit("--variant is required for compact100")
+    spec = RunSpec(args.model, variant, args.seed, "adhoc")
+    mapping = json.loads(MAPPING_FILE.read_text(encoding="ascii"))
+    res = execute_run(data, spec, exp, mapping, Path(args.out), verified, save_model=False)
+    print(f"{spec.run_id}: wrote {args.out} (fit {res['run_info']['fit_seconds']} s)")
+    return 0
+
+
+def cmd_run_experiments(args: argparse.Namespace) -> int:
+    from .experiments.runner import (build_plan, execute_run, git_state, repeatability_check, summarize,
+                                     write_manifest)
+    exp = load_experiment_config()
+    data, verified = load_dataset(args)
+    git = git_state()
+    if git["source_changes_uncommitted"] and not args.allow_dirty:
+        raise SystemExit("Uncommitted changes in src/configs/tests; commit before running (protocol: freeze "
+                         "code and configuration before any test prediction).\n" + git["source_changes_uncommitted"])
+    if git["commit"] is None and not args.allow_dirty:
+        raise SystemExit("Not a git checkout: the frozen commit cannot be recorded (use --allow-dirty to override).")
+    results = _results_dir(args)
+    if (results / "runs").exists() and any((results / "runs").iterdir()) and not args.overwrite:
+        raise SystemExit(f"{results / 'runs'} already contains runs; refusing to overwrite (use --overwrite).")
+    plan = build_plan(exp, include_sensitivity=not args.no_sensitivity)
+    write_manifest(results, exp, plan, data, verified,
+                   {"experiment.toml": EXPERIMENT_FILE, "data_sources.toml": DATA_SOURCES_FILE,
+                    "compact100_mapping.json": MAPPING_FILE}, git)
+    mapping = json.loads(MAPPING_FILE.read_text(encoding="ascii"))
+    for i, spec in enumerate(plan, 1):
+        res = execute_run(data, spec, exp, mapping, results / "runs" / spec.run_id, verified)
+        m = res["metrics"]
+        print(f"[{i}/{len(plan)}] {spec.run_id}: {m['n_correct']}/{m['n']} correct "
+              f"({100 * m['accuracy']:.2f}%), fit {res['run_info']['fit_seconds']} s", flush=True)
+    out = summarize(results, exp, include_sensitivity=not args.no_sensitivity)
+    print(f"Outcome category: {out['decision']['category']} ({out['decision']['rule']})")
+    if not args.no_repeatability:
+        extra = []
+        if args.data_root:
+            extra += ["--data-root", str(args.data_root)]
+        if args.allow_unverified_data:
+            extra += ["--allow-unverified-data"]
+        rep = repeatability_check(results, exp, extra)
+        print(f"Repeatability (fresh process, seed {rep['seed']}): {'PASSED' if rep['passed'] else 'FAILED'}")
+    print(f"Results in {results}")
+    return 0
+
+
+def cmd_summarize(args: argparse.Namespace) -> int:
+    from .experiments.runner import summarize
+    out = summarize(_results_dir(args), load_experiment_config(), include_sensitivity=not args.no_sensitivity)
+    print(f"Outcome category: {out['decision']['category']}")
+    return 0
+
+
+def _add_data_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--data-root", type=Path, default=None, help="extracted 'UCI HAR Dataset' directory")
+    p.add_argument("--allow-unverified-data", action="store_true",
+                   help="accept data failing the configured checksums (synthetic tests only; recorded in outputs)")
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="har_repro", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -164,6 +252,29 @@ def main(argv: list[str] | None = None) -> int:
     b.set_defaults(func=cmd_build_mapping)
     c = sub.add_parser("validate-data", help="write results/data_validation/data_validation.json")
     c.set_defaults(func=cmd_validate_data)
+
+    r = sub.add_parser("run-experiments", help="Phase 2: all pre-registered runs, summary, bootstrap, repeatability")
+    _add_data_args(r)
+    r.add_argument("--results-dir", type=Path, default=None)
+    r.add_argument("--no-sensitivity", action="store_true", help="skip the exploratory Y/Z mapping runs")
+    r.add_argument("--no-repeatability", action="store_true", help="skip the fresh-process repeatability check")
+    r.add_argument("--allow-dirty", action="store_true", help="permit uncommitted source/config changes (not for real runs)")
+    r.add_argument("--overwrite", action="store_true", help="permit writing over existing run outputs")
+    r.set_defaults(func=cmd_run_experiments)
+
+    o = sub.add_parser("run-one", help="fit and evaluate a single configuration (used by the repeatability check)")
+    _add_data_args(o)
+    o.add_argument("--model", choices=["full561", "compact100"], required=True)
+    o.add_argument("--variant", choices=["X", "Y", "Z"], default=None)
+    o.add_argument("--seed", type=int, required=True)
+    o.add_argument("--out", type=Path, required=True)
+    o.set_defaults(func=cmd_run_one)
+
+    s = sub.add_parser("summarize", help="recompute summary, bootstrap and decision from saved runs")
+    s.add_argument("--results-dir", type=Path, default=None)
+    s.add_argument("--no-sensitivity", action="store_true")
+    s.set_defaults(func=cmd_summarize)
+
     args = p.parse_args(argv)
     return args.func(args)
 

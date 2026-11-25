@@ -16,7 +16,7 @@ That is a **1.66 percentage-point** cost for 82.17% fewer input columns.
 
 **Conditional result:** nine of the 100 published feature names correspond to three columns each. The authors' choice cannot be recovered, so the compact result depends on a pre-registered mapping rule (see [docs/FEATURE_MAPPING.md](docs/FEATURE_MAPPING.md)).
 
-> **Status: Phase 1 (data pipeline) complete. No model has been trained and there are no results yet.**
+> **Status: Phase 2A complete (experiment code, tested on synthetic data only). The experiments on the real data have not been run yet, so there are no results.**
 
 ## Quick start
 
@@ -43,6 +43,25 @@ python -m har_repro.cli validate-data
 python -m pytest
 ```
 
+### Running the pre-registered experiments
+
+```bash
+python -m har_repro.cli run-experiments
+```
+
+This single command does the following:
+1. **Checks before it starts.** It refuses to run if the data fails its checksums, if `src/`, `configs/` or `tests/` have uncommitted changes, or if `results/runs/` already contains runs.
+2. **Records a manifest.** `results/manifest.json` captures the git commit, package versions, config hashes and the run plan *before any test prediction*.
+3. **Runs the 20 pre-registered fits.** Each one trains on the official training partition only and predicts the test partition once:
+   - Full-561 and Compact-100 (X mapping) on seeds 2026–2030;
+   - the exploratory Compact-100 Y and Z mappings on the same seeds.
+4. **Writes the summary.** `results/summary/` gets the five-seed statistics, the paired participant bootstrap (seed-2026 pair, 10,000 replicates, seed 1729), the pre-registered outcome category, and a machine-generated `results_table.md`.
+5. **Checks repeatability.** It re-runs both primary models at seed 2026 in a fresh process and requires bit-identical probabilities and labels (`results/repeatability/repeatability.json`).
+
+Other commands:
+- `python -m har_repro.cli summarize` recomputes the summary from saved runs.
+- `python -m har_repro.cli run-one --model {full561|compact100} [--variant X|Y|Z] --seed N --out DIR` fits a single configuration.
+
 The data goes under `./data` (git-ignored). Set `HAR_DATA_DIR` to use another location. The download tries the official UCI legacy path, then the official current URL, then an Internet Archive capture of the official URL. A file is accepted only if its SHA-256 matches; see [docs/DATA.md](docs/DATA.md).
 
 ## Repository layout
@@ -59,7 +78,12 @@ src/har_repro/
   data/acquire.py                     download, checksum, safe extraction, file verification
   data/loader.py                      official 561-feature loader, label encoding, identical-column detection
   features/mapping.py                 S2 name -> column mapping (ascending original-index order)
-  models/xgb_params.py                frozen config -> xgboost.train parameters (no fitting)
+  models/xgb_params.py                frozen config -> xgboost.train parameters
+  models/train.py                     fit on training partition only; predict probabilities and labels
+  evaluation/metrics.py               accuracy, macro-F1, paper balanced accuracy, macro-AUC, confusion, per-participant
+  evaluation/bootstrap.py             paired participant-level (cluster) bootstrap of the accuracy gap
+  evaluation/decision.py              pre-registered outcome categories (A1-R1 precedence)
+  experiments/runner.py               run plan, per-run outputs, manifest, summary, repeatability check
 tests/                                pytest suite; tests marked `data` need prepared data
 docs/                                 PROTOCOL, FEATURE_MAPPING, DATA, ENVIRONMENT
 results/                              outputs (only data validation so far)

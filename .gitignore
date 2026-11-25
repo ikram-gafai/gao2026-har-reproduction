@@ -26,3 +26,6 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# Trained boosters are re-creatable from code + seeds; keep them out of version control
+results/**/model.json
