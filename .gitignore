@@ -1,0 +1,28 @@
+# Environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data: never commit raw archives or extracted dataset files (re-created by `prepare-data`)
+/data/
+*.zip
+*.part
+
+# Private / non-public material must never enter this repository
+private/
+*CONFIDENTIAL*
+*assessment*brief*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

@@ -1,0 +1,19 @@
+# Exact resolved environment (pip freeze), Python 3.11.3, Windows 11 x64, recorded 2026-11-25.
+# Install: python -m pip install -r requirements-lock.txt && python -m pip install -e . --no-deps
+cloudpickle==3.1.3
+colorama==0.4.6
+iniconfig==2.3.1
+joblib==1.6.0
+narwhals==2.29.0
+numpy==2.4.6
+packaging==26.4
+pandas==3.1.1
+pluggy==1.7.0
+Pygments==2.21.0
+pytest==9.2.0
+python-dateutil==4.0.0
+scikit-learn==1.9.1
+scipy==1.17.1
+threadpoolctl==3.8.0
+tzdata==2026.6
+xgboost==3.2.0

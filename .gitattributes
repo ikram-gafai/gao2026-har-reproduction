@@ -1,0 +1,5 @@
+# Normalise text to LF on every platform so recorded file hashes are reproducible.
+* text=auto eol=lf
+# Byte-exact copy of the paper supplement (CRLF line endings, checksum-verified): never convert.
+*.csv -text
+*.zip binary

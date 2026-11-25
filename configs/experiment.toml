@@ -1,0 +1,99 @@
+# Frozen experimental configuration.
+# Source of truth: pre-registered protocol v2 + Addendum A1 (restated in docs/PROTOCOL.md).
+# Changing any value here after test-set evaluation invalidates the pre-registration.
+
+[protocol]
+paper = "Gao et al. (2026), Compact and Explainable Human Activity Recognition with Boruta-RFE Feature Selection and SHAP Interpretation, Applied Sciences 16(20):10046"
+paper_doi = "10.3390/app162010046"
+protocol_version = "v2+A1"
+scope = "fixed-configuration refit of the two published final XGBoost models; no Boruta, RFE, CV tuning or SHAP"
+
+[data]
+split = "official_uci_subject_disjoint"   # never re-split; no pooled train+test fitting
+n_features = 561
+n_train = 7352
+n_test = 2947
+n_train_subjects = 21
+n_test_subjects = 9
+label_encoding = "original_minus_one"     # 1..6 -> 0..5
+activity_names = ["WALKING", "WALKING_UPSTAIRS", "WALKING_DOWNSTAIRS", "SITTING", "STANDING", "LAYING"]
+
+[mapping]
+primary_variant = "X"                     # first occurrence for the nine ambiguous bandsEnergy names
+sensitivity_variants = ["Y", "Z"]         # exploratory only; all nine moved together
+column_order = "ascending_original_index"
+n_selected = 100
+n_unique_expected = 91
+n_ambiguous_expected = 9
+
+# Each model lists every parameter explicitly (no inheritance), mirroring the protocol table.
+[models.full561]
+feature_set = "all561"
+num_boost_round = 400
+max_depth = 3
+eta = 0.10
+colsample_bytree = 1.0
+subsample = 0.8
+gamma = 0.0
+min_child_weight = 1.0
+base_score = 0.5
+tree_method = "exact"
+objective = "multi:softprob"
+num_class = 6
+nthread = 1
+
+[models.compact100]
+feature_set = "compact100"
+num_boost_round = 300
+max_depth = 3
+eta = 0.10
+colsample_bytree = 0.8
+subsample = 0.8
+gamma = 0.0
+min_child_weight = 1.0
+base_score = 0.5
+tree_method = "exact"
+objective = "multi:softprob"
+num_class = 6
+nthread = 1
+
+[implementation]
+# Primary implementation (decided before any experiment): Python xgboost 3.2.0, native xgboost.train API.
+primary_xgboost_python = "3.2.0"
+original_paper_implementation = "R 4.3.3 with R xgboost 1.7.7.1 (tree method, objective and RNG state not reported)"
+# Optional, separately labelled version-parity sensitivity: Python xgboost 1.7.6 (same 1.7 release series as the
+# paper's R package). It never replaces the primary implementation and is never selected by test performance.
+version_parity_sensitivity_xgboost_python = "1.7.6"
+version_parity_sensitivity_status = "optional"
+
+[seeds]
+main = [2026, 2027, 2028, 2029, 2030]          # both models, paired
+reference = 2026                                # pre-declared reference pair; not selected by score
+sensitivity = [2026, 2027, 2028, 2029, 2030]    # Y/Z compact variants (Addendum A1-R3)
+repeatability = 2026                            # both primary models re-run in a fresh process; bit-identical labels and probabilities required
+
+[bootstrap]
+unit = "participant"          # resample the 9 test participants with replacement; pool their windows at multiplicity
+model_seed = 2026             # bootstrap applies to the seed-2026 model pair
+seed = 1729                   # fixed (Addendum A1-R2)
+replicates = 10000
+percentiles = [2.5, 97.5]
+
+[decision_rule]
+# Addendum A1-R1: evaluated in this order; the first matching rule decides.
+order = ["not_reproduced_if_reference_gap_le_0", "strong", "partial", "not_reproduced"]
+strong_model_tolerance_pp = 1.0     # both reference-seed accuracies within +/-1.0 pp of published
+strong_gap_tolerance_pp = 1.0       # reference-seed gap > 0 and within +/-1.0 pp of +1.66
+partial_full_tolerance_pp = 1.0     # full model within +/-1.0 pp, or
+partial_any_tolerance_pp = 2.0      # at least one model within +/-2.0 pp with a positive gap
+
+[published]   # Gao et al. 2026, Table 1 and Section 3.2 (not reproduced values)
+full561_accuracy = 0.9555
+full561_correct = 2816
+compact100_accuracy = 0.9389
+compact100_correct = 2767
+n_test = 2947
+gap_pp = 1.66
+bootstrap_ci_pp = [0.49, 3.18]
+full561_macro_f1 = 0.9550
+compact100_macro_f1 = 0.9384
