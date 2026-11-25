@@ -29,3 +29,5 @@ desktop.ini
 
 # Trained boosters are re-creatable from code + seeds; keep them out of version control
 results/**/model.json
+# Local console logs contain machine-specific absolute paths; timings are kept in run_info.json
+results/logs/

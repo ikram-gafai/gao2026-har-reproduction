@@ -1,0 +1,165 @@
+{
+ "n": 2947,
+ "n_correct": 2784,
+ "accuracy": 0.9446895147607737,
+ "macro_f1": 0.944320254643945,
+ "macro_precision": 0.946959084634086,
+ "macro_recall": 0.943415111082729,
+ "balanced_accuracy_paper": 0.9661474216500338,
+ "sklearn_balanced_accuracy_macro_recall": 0.943415111082729,
+ "macro_auc_ovr": 0.9977851776243334,
+ "confusion_matrix": {
+  "labels": [
+   "WALKING",
+   "WALKING_UPSTAIRS",
+   "WALKING_DOWNSTAIRS",
+   "SITTING",
+   "STANDING",
+   "LAYING"
+  ],
+  "rows_true_cols_pred": [
+   [
+    491,
+    2,
+    3,
+    0,
+    0,
+    0
+   ],
+   [
+    20,
+    443,
+    6,
+    1,
+    1,
+    0
+   ],
+   [
+    4,
+    23,
+    393,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    2,
+    0,
+    414,
+    75,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    26,
+    506,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    537
+   ]
+  ]
+ },
+ "per_class": {
+  "WALKING": {
+   "support": 496,
+   "correct": 491,
+   "precision": 0.9533980582524272,
+   "recall": 0.9899193548387096,
+   "f1": 0.9713155291790306,
+   "specificity": 0.9902080783353733,
+   "balanced_accuracy_ovr": 0.9900637165870414
+  },
+  "WALKING_UPSTAIRS": {
+   "support": 471,
+   "correct": 443,
+   "precision": 0.9425531914893617,
+   "recall": 0.940552016985138,
+   "f1": 0.9415515409139213,
+   "specificity": 0.9890953150242326,
+   "balanced_accuracy_ovr": 0.9648236660046854
+  },
+  "WALKING_DOWNSTAIRS": {
+   "support": 420,
+   "correct": 393,
+   "precision": 0.9776119402985075,
+   "recall": 0.9357142857142857,
+   "f1": 0.9562043795620438,
+   "specificity": 0.996438464582509,
+   "balanced_accuracy_ovr": 0.9660763751483974
+  },
+  "SITTING": {
+   "support": 491,
+   "correct": 414,
+   "precision": 0.9387755102040817,
+   "recall": 0.8431771894093686,
+   "f1": 0.888412017167382,
+   "specificity": 0.9890065146579805,
+   "balanced_accuracy_ovr": 0.9160918520336745
+  },
+  "STANDING": {
+   "support": 532,
+   "correct": 506,
+   "precision": 0.8694158075601375,
+   "recall": 0.9511278195488722,
+   "f1": 0.9084380610412927,
+   "specificity": 0.9685300207039338,
+   "balanced_accuracy_ovr": 0.959828920126403
+  },
+  "LAYING": {
+   "support": 537,
+   "correct": 537,
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0,
+   "specificity": 1.0,
+   "balanced_accuracy_ovr": 1.0
+  }
+ },
+ "per_participant": {
+  "2": {
+   "correct": 280,
+   "total": 302
+  },
+  "4": {
+   "correct": 310,
+   "total": 317
+  },
+  "9": {
+   "correct": 254,
+   "total": 288
+  },
+  "10": {
+   "correct": 240,
+   "total": 294
+  },
+  "12": {
+   "correct": 304,
+   "total": 320
+  },
+  "13": {
+   "correct": 324,
+   "total": 327
+  },
+  "18": {
+   "correct": 345,
+   "total": 364
+  },
+  "20": {
+   "correct": 346,
+   "total": 354
+  },
+  "24": {
+   "correct": 381,
+   "total": 381
+  }
+ }
+}

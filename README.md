@@ -16,7 +16,75 @@ That is a **1.66 percentage-point** cost for 82.17% fewer input columns.
 
 **Conditional result:** nine of the 100 published feature names correspond to three columns each. The authors' choice cannot be recovered, so the compact result depends on a pre-registered mapping rule (see [docs/FEATURE_MAPPING.md](docs/FEATURE_MAPPING.md)).
 
-> **Status: Phase 2A complete (experiment code, tested on synthetic data only). The experiments on the real data have not been run yet, so there are no results.**
+> **Status:** the pre-registered experiments have been run.
+> - Pre-registration: commit `e1463375`.
+> - Frozen implementation that produced the results: commit `ca2b8801`.
+> - Outcome under the pre-registered criteria: **strong numerical agreement**. The compact result is conditional on the declared feature mapping.
+
+## Results (pre-registered primary analysis)
+
+**Setup:**
+- Official subject-disjoint UCI HAR test set: 2,947 windows from 9 participants.
+- Compact model uses the pre-registered **X-first** mapping.
+- Paper values are from Gao et al. (2026), Table 1 and Section 3.2.
+- Seed 2026 was declared as the reference before any run. The five-seed column covers seeds 2026–2030; no seed was selected by score.
+
+| Metric | Paper | Reproduction, seed 2026 (reference) | Five-seed mean ± SD |
+|---|---:|---:|---:|
+| Full-561 accuracy | 95.55% (2816/2947) | 95.25% (2807/2947) | 95.44 ± 0.16% |
+| Compact-100 accuracy | 93.89% (2767/2947) | 94.16% (2775/2947) | 93.70 ± 0.27% |
+| **Full − Compact accuracy gap** | **+1.66 pp** | **+1.09 pp** | **+1.74 ± 0.38 pp** |
+| Full-561 macro-F1 | 0.9550 | 0.9519 | 0.9539 |
+| Compact-100 macro-F1 | 0.9384 | 0.9413 | 0.9365 |
+| Full-561 balanced accuracy (paper's one-vs-rest definition) | 0.9726 | 0.9707 | 0.9719 |
+| Compact-100 balanced accuracy (paper's definition) | 0.9625 | 0.9642 | 0.9614 |
+| Full-561 macro-AUC (one-vs-rest) | 0.9984 | 0.9982 | 0.9984 |
+| Compact-100 macro-AUC (one-vs-rest) | 0.9972 | 0.9973 | 0.9972 |
+| Input columns | 561 → 100 (−82.17%) | 561 → 100 (−82.17%); 540 → 95 distinct vectors | — |
+
+**Uncertainty of the gap.** The participant-level paired bootstrap 95% CI is **+0.29 to +2.11 pp** for the **seed-2026 model pair only**, against the paper's +0.49 to +3.18 pp.
+- Settings: 10,000 resamples of the 9 test participants, seed 1729.
+- This interval describes participant sampling for that one pair of fitted models. It is **not** an interval around the five-seed mean.
+- Seed-to-seed variation is reported separately as the SD above.
+
+**Pre-registered outcome:** *strong numerical agreement (conditional compact reproduction)*.
+- At seed 2026, both accuracies are within ±1.0 pp of the paper, and the gap is positive and within ±1.0 pp of +1.66 pp.
+- The five-seed means also meet these thresholds.
+- Per-seed results and the machine-generated table are in [`results/summary/results_table.md`](results/summary/results_table.md).
+
+**Exploratory mapping sensitivity** (not part of the primary analysis, and not used to choose a mapping). Here all nine ambiguous features are moved together to another sensor-axis block:
+
+| Compact-100 mapping | Accuracy, mean ± SD over seeds 2026–2030 | Mean Full − Compact gap |
+|---|---:|---:|
+| X-first (primary) | 93.70 ± 0.27% | +1.74 pp |
+| Y block | 93.97 ± 0.10% | +1.47 pp |
+| Z block | 94.29 ± 0.12% | +1.15 pp |
+
+The gap is positive in all 15 compact runs. Its size, however, depends on which columns the nine ambiguous names refer to.
+
+## Interpreting the result: limitations
+
+- **Nine ambiguous features.**
+  - Nine of the paper's 100 feature names (`bandsEnergy` bands 1–8, 1–16 and 1–24 of fBodyAcc, fBodyAccJerk and fBodyGyro) occur three times in `features.txt`, once per sensor-axis block. The paper gives no index or axis.
+  - X-first is a **pre-registered convention, not the authors' confirmed mapping**.
+  - The exploratory Y and Z mappings change mean compact accuracy by up to +0.58 pp.
+  - The *direction* of the accuracy–compactness trade-off is robust; its *size* is conditional on the mapping.
+  - See [docs/FEATURE_MAPPING.md](docs/FEATURE_MAPPING.md).
+- **Five identical column pairs.**
+  - Five pairs among the 100 selected columns are numerically identical (for example `tBodyAccMag-std()` and `tGravityAccMag-std()`), so the compact model has 95 distinct inputs.
+  - The paper's 82.17% reduction counts named columns.
+  - SHAP importance between identical columns is not identifiable. This reproduction does not reproduce the SHAP analysis.
+- **R vs Python.**
+  - The paper used R 4.3.3 with R xgboost 1.7.7.1 and did not report the tree method, objective or random state.
+  - This reproduction uses Python xgboost 3.2.0 with exact greedy splitting, `base_score=0.5` and one thread.
+  - Random draws cannot be matched across languages, because R xgboost uses R's RNG.
+  - The observed differences from the paper (at most 0.57 pp, for the gap) are the same size as our seed-to-seed variation (SD 0.16–0.38 pp). The two sources cannot be separated with these runs.
+- **Nine test participants.**
+  - Each interval rests on 9 people.
+  - At seed 2026 the gap is concentrated in a few participants: +3.74, +3.64 and +2.08 pp for participants 10, 2 and 9, against at most +0.62 pp for the others (`results/runs/*/metrics.json`, `per_participant`).
+- **Scope.**
+  - This reproduces the final classifiers using the published feature list. It does **not** re-derive Boruta → RFE selection, the grouped-CV tuning or the SHAP analysis.
+  - UCI HAR is laboratory data from 30 adults.
 
 ## Quick start
 
@@ -58,6 +126,26 @@ This single command does the following:
 4. **Writes the summary.** `results/summary/` gets the five-seed statistics, the paired participant bootstrap (seed-2026 pair, 10,000 replicates, seed 1729), the pre-registered outcome category, and a machine-generated `results_table.md`.
 5. **Checks repeatability.** It re-runs both primary models at seed 2026 in a fresh process and requires bit-identical probabilities and labels (`results/repeatability/repeatability.json`).
 
+### Checking the committed results
+
+```bash
+python -m har_repro.cli verify-results                                   # audit saved outputs (a few seconds)
+python -m har_repro.cli verify-results --refit compact100-X__seed2026    # also retrain one run (about 1 min)
+```
+
+`verify-results` audits the committed outputs without trusting them:
+- It recomputes every run's metrics from the saved predictions.
+- It checks labels and subject IDs against the official test partition.
+- It checks that predictions match the saved probabilities.
+- It regenerates the summary, the 10,000-replicate participant bootstrap, the decision and the results table, and requires them to be byte-identical to the committed files.
+- It checks the repeatability record.
+- With `--refit RUN_ID` it retrains that configuration from the public data and requires bit-identical probabilities.
+
+Re-running `run-experiments` into a new `--results-dir` regenerates everything. On the reference machine, with one training thread, the recorded fit times (`fit_seconds` in each `run_info.json`) are:
+- full-561: 313–386 s per run;
+- compact-100: 32–52 s per run;
+- all 20 runs together: about 42 min, plus the repeatability re-fits.
+
 Other commands:
 - `python -m har_repro.cli summarize` recomputes the summary from saved runs.
 - `python -m har_repro.cli run-one --model {full561|compact100} [--variant X|Y|Z] --seed N --out DIR` fits a single configuration.
@@ -84,9 +172,11 @@ src/har_repro/
   evaluation/bootstrap.py             paired participant-level (cluster) bootstrap of the accuracy gap
   evaluation/decision.py              pre-registered outcome categories (A1-R1 precedence)
   experiments/runner.py               run plan, per-run outputs, manifest, summary, repeatability check
+  experiments/verify.py               audit of saved results (verify-results)
 tests/                                pytest suite; tests marked `data` need prepared data
 docs/                                 PROTOCOL, FEATURE_MAPPING, DATA, ENVIRONMENT
-results/                              outputs (only data validation so far)
+results/                              manifest, 20 runs (predictions, probabilities, metrics, configs), summary,
+                                      bootstrap, decision, repeatability (see results/README.md)
 ```
 
 ## Protocol

@@ -36,4 +36,8 @@ The remaining resolved packages are cloudpickle 3.1.3, colorama 0.4.6, iniconfig
 
 The installed xgboost wheel is built with CUDA support, but `device` stays `cpu`.
 
-Observed runtimes will be recorded with the Phase 2 runs.
+Observed runtimes in the pre-registered run of 25 Nov 2026 (single training thread, `fit_seconds` in `results/runs/*/run_info.json`):
+
+- full-561 fits: 313–386 s;
+- compact-100 fits: 32–52 s;
+- sum of the 20 fits: 2,511 s.

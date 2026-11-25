@@ -115,3 +115,34 @@ def test_refuses_uncommitted_source_changes(syn_root, tmp_path, small_cfg, monke
     with pytest.raises(SystemExit):
         cli.main(["run-experiments", "--data-root", str(syn_root), "--allow-unverified-data",
                   "--results-dir", str(tmp_path)])
+
+
+def test_verify_results_passes_and_detects_tampering(syn_root, tmp_path, small_cfg):
+    from har_repro.experiments.verify import verify_results
+    out = tmp_path / "results"
+    assert cli.main(["run-experiments", "--data-root", str(syn_root), "--allow-unverified-data",
+                     "--results-dir", str(out), "--allow-dirty"]) == 0
+    data = load_uci_har(syn_root)
+    ok = verify_results(out, small_cfg, data, MAPPING, refit=["compact100-X__seed2026"], log=lambda *_: None)
+    assert ok["passed"], ok["problems"]
+    assert ok["refits"][0]["bit_identical"] is True
+    assert cli.main(["verify-results", "--results-dir", str(out), "--data-root", str(syn_root),
+                     "--allow-unverified-data"]) == 0
+
+    # Tampering with a metric, a prediction or the summary must be detected.
+    m = out / "runs" / "full561__seed2026" / "metrics.json"
+    original = m.read_text()
+    m.write_text(original.replace('"n_correct": ', '"n_correct": 1', 1))
+    assert not verify_results(out, small_cfg, data, MAPPING, log=lambda *_: None)["passed"]
+    m.write_text(original)
+    p = out / "runs" / "compact100-X__seed2027" / "predictions.csv"
+    lines = p.read_text().splitlines()
+    fields = lines[1].split(",")
+    fields[6] = "0" if fields[6] == "1" else "1"
+    p.write_text("\n".join([lines[0], ",".join(fields)] + lines[2:]) + "\n")
+    assert not verify_results(out, small_cfg, data, MAPPING, log=lambda *_: None)["passed"]
+    p.write_text("\n".join(lines) + "\n")
+    s = out / "summary" / "decision.json"
+    s.write_text(s.read_text().replace('"basis"', '"basis_edited"'))
+    res = verify_results(out, small_cfg, data, MAPPING, log=lambda *_: None)
+    assert not res["passed"] and any("decision.json" in x for x in res["problems"])

@@ -187,6 +187,26 @@ def _stats(values: Sequence[float]) -> dict:
 
 
 def summarize(results_dir: Path, cfg: Mapping[str, Any], include_sensitivity: bool = True) -> dict:
+    """Compute the summary from saved runs and write it to <results>/summary/."""
+    out = compute_summary(results_dir, cfg, include_sensitivity)
+    for name, text in summary_files(out).items():
+        (results_dir / "summary").mkdir(parents=True, exist_ok=True)
+        (results_dir / "summary" / name).write_text(text, encoding="utf-8")
+    return out
+
+
+def summary_files(out: Mapping[str, Any]) -> dict[str, str]:
+    """Exact file contents written by `summarize` (used by verification to compare byte-for-byte)."""
+    return {
+        "summary.json": json.dumps(out["summary"], indent=1) + "\n",
+        "bootstrap.json": json.dumps(out["bootstrap"], indent=1) + "\n",
+        "decision.json": json.dumps(out["decision"], indent=1) + "\n",
+        "results_table.md": results_table(out["summary"], out["bootstrap"], out["decision"]),
+    }
+
+
+def compute_summary(results_dir: Path, cfg: Mapping[str, Any], include_sensitivity: bool = True) -> dict:
+    """Pure computation of summary, bootstrap and decision from saved run outputs (writes nothing)."""
     pub = cfg["published"]
     primary = cfg["mapping"]["primary_variant"]
     ref = cfg["seeds"]["reference"]
@@ -238,12 +258,6 @@ def summarize(results_dir: Path, cfg: Mapping[str, Any], include_sensitivity: bo
             sens[variant] = {"per_seed": rows, "accuracy": _stats([r["accuracy"] for r in rows])}
         summary["sensitivity_exploratory"] = sens
 
-    out = results_dir / "summary"
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
-    (out / "bootstrap.json").write_text(json.dumps(boot, indent=1) + "\n", encoding="utf-8")
-    (out / "decision.json").write_text(json.dumps(decision, indent=1) + "\n", encoding="utf-8")
-    (out / "results_table.md").write_text(results_table(summary, boot, decision), encoding="utf-8")
     return {"summary": summary, "bootstrap": boot, "decision": decision}
 
 

@@ -6,6 +6,7 @@
     python -m har_repro.cli run-experiments          (Phase 2: all pre-registered runs)
     python -m har_repro.cli run-one --model M [--variant V] --seed N --out DIR
     python -m har_repro.cli summarize
+    python -m har_repro.cli verify-results [--refit RUN_ID]
 """
 
 from __future__ import annotations
@@ -233,6 +234,21 @@ def cmd_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_verify_results(args: argparse.Namespace) -> int:
+    from .experiments.verify import verify_results
+    exp = load_experiment_config()
+    data, mapping = None, None
+    if not args.no_data:
+        data, _verified = load_dataset(args)
+        mapping = json.loads(MAPPING_FILE.read_text(encoding="ascii"))
+    rep = verify_results(_results_dir(args), exp, data, mapping, refit=args.refit or ())
+    for p in rep["problems"]:
+        print(f"PROBLEM: {p}", file=sys.stderr)
+    print(f"Results verification: {'PASSED' if rep['passed'] else 'FAILED'} "
+          f"({rep['runs_checked']} runs; produced by commit {rep['manifest_commit']})")
+    return 0 if rep["passed"] else 1
+
+
 def _add_data_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--data-root", type=Path, default=None, help="extracted 'UCI HAR Dataset' directory")
     p.add_argument("--allow-unverified-data", action="store_true",
@@ -274,6 +290,15 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--results-dir", type=Path, default=None)
     s.add_argument("--no-sensitivity", action="store_true")
     s.set_defaults(func=cmd_summarize)
+
+    v = sub.add_parser("verify-results", help="audit saved results: recompute metrics, summary, bootstrap and "
+                                              "decision from saved predictions; optionally refit runs")
+    _add_data_args(v)
+    v.add_argument("--results-dir", type=Path, default=None)
+    v.add_argument("--no-data", action="store_true", help="skip checks that need the dataset (labels, subjects, refit)")
+    v.add_argument("--refit", action="append", metavar="RUN_ID",
+                   help="retrain this run from the public data and require bit-identical probabilities (repeatable)")
+    v.set_defaults(func=cmd_verify_results)
 
     args = p.parse_args(argv)
     return args.func(args)

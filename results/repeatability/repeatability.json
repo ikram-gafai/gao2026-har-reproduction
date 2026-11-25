@@ -1,0 +1,20 @@
+{
+ "seed": 2026,
+ "checks": [
+  {
+   "run_id": "full561__seed2026",
+   "fresh_process": true,
+   "probabilities_bit_identical": true,
+   "labels_identical": true,
+   "max_abs_prob_diff": 0.0
+  },
+  {
+   "run_id": "compact100-X__seed2026",
+   "fresh_process": true,
+   "probabilities_bit_identical": true,
+   "labels_identical": true,
+   "max_abs_prob_diff": 0.0
+  }
+ ],
+ "passed": true
+}

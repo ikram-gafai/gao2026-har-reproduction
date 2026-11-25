@@ -1,0 +1,103 @@
+{
+ "written_utc": "2026-11-25T22:26:23+00:00",
+ "purpose": "Frozen state recorded before any test-set prediction of this run batch.",
+ "git": {
+  "commit": "ca2b88017070d0bdbbbfb02129b7ffc60427edf3",
+  "source_changes_uncommitted": ""
+ },
+ "environment": {
+  "python": "3.11.3",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "machine": "AMD64",
+  "processor": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+  "har_repro": "0.1.0",
+  "numpy": "2.4.6",
+  "pandas": "3.1.1",
+  "scikit_learn": "1.9.1",
+  "scipy": "1.17.1",
+  "xgboost": "3.2.0"
+ },
+ "data_verified": true,
+ "data_root": "<HAR_DATA_DIR or project data/>",
+ "config_sha256": {
+  "experiment.toml": "f8a25fc51897572f60766dca2621ba112dbccceac44a77f8aa0c11c2a20f671d",
+  "data_sources.toml": "fc861b7a14d8e5e708e26b89d6be554204e5742f09526e102f8c386aedbff69a",
+  "compact100_mapping.json": "924a21958c954fa4b22573367da5614984768b7debab525b05eb1593741e4145"
+ },
+ "plan": [
+  "full561__seed2026",
+  "compact100-X__seed2026",
+  "full561__seed2027",
+  "compact100-X__seed2027",
+  "full561__seed2028",
+  "compact100-X__seed2028",
+  "full561__seed2029",
+  "compact100-X__seed2029",
+  "full561__seed2030",
+  "compact100-X__seed2030",
+  "compact100-Y__seed2026",
+  "compact100-Y__seed2027",
+  "compact100-Y__seed2028",
+  "compact100-Y__seed2029",
+  "compact100-Y__seed2030",
+  "compact100-Z__seed2026",
+  "compact100-Z__seed2027",
+  "compact100-Z__seed2028",
+  "compact100-Z__seed2029",
+  "compact100-Z__seed2030"
+ ],
+ "seeds": {
+  "main": [
+   2026,
+   2027,
+   2028,
+   2029,
+   2030
+  ],
+  "reference": 2026,
+  "sensitivity": [
+   2026,
+   2027,
+   2028,
+   2029,
+   2030
+  ],
+  "repeatability": 2026
+ },
+ "bootstrap": {
+  "unit": "participant",
+  "model_seed": 2026,
+  "seed": 1729,
+  "replicates": 10000,
+  "percentiles": [
+   2.5,
+   97.5
+  ]
+ },
+ "decision_rule": {
+  "order": [
+   "not_reproduced_if_reference_gap_le_0",
+   "strong",
+   "partial",
+   "not_reproduced"
+  ],
+  "strong_model_tolerance_pp": 1.0,
+  "strong_gap_tolerance_pp": 1.0,
+  "partial_full_tolerance_pp": 1.0,
+  "partial_any_tolerance_pp": 2.0
+ },
+ "published": {
+  "full561_accuracy": 0.9555,
+  "full561_correct": 2816,
+  "compact100_accuracy": 0.9389,
+  "compact100_correct": 2767,
+  "n_test": 2947,
+  "gap_pp": 1.66,
+  "bootstrap_ci_pp": [
+   0.49,
+   3.18
+  ],
+  "full561_macro_f1": 0.955,
+  "compact100_macro_f1": 0.9384
+ }
+}

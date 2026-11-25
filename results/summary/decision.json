@@ -1,0 +1,17 @@
+{
+ "category": "strong",
+ "rule": "both models and gap within +/-1.0 pp",
+ "full_minus_published_pp": -0.3005938242280348,
+ "compact_minus_published_pp": 0.2735561588055657,
+ "gap_pp": 1.0858500169664054,
+ "gap_minus_published_pp": -0.5741499830335945,
+ "basis": "reference seed 2026 pair (pre-declared)",
+ "supplementary_five_seed_mean_classification": {
+  "category": "strong",
+  "rule": "both models and gap within +/-1.0 pp",
+  "full_minus_published_pp": -0.11057007125890861,
+  "compact_minus_published_pp": -0.1879300984051535,
+  "gap_pp": 1.7373600271462508,
+  "gap_minus_published_pp": 0.0773600271462509
+ }
+}
