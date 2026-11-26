@@ -33,7 +33,9 @@ plt.rcParams.update({
     "xtick.major.size": 2.5, "ytick.major.size": 2.5, "axes.edgecolor": MUTED, "text.color": INK,
     "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": INK, "svg.fonttype": "path",
     "legend.fontsize": FS - 0.3,
+    "svg.hashsalt": "gao2026-har-reproduction",  # deterministic element IDs
 })
+SVG_META = {"Date": None}  # no build timestamp: identical inputs give byte-identical SVGs
 
 
 def load():
@@ -86,7 +88,7 @@ def fig1(summary, pub, width_mm=98, height_mm=41):
     leg.get_frame().set_edgecolor("none")
     leg.get_frame().set_facecolor("white")
     fig.subplots_adjust(left=0.115, right=0.995, bottom=0.27, top=0.985)
-    fig.savefig(OUT / "fig1_seed_accuracy.svg")
+    fig.savefig(OUT / "fig1_seed_accuracy.svg", metadata=SVG_META)
     plt.close(fig)
 
 
@@ -119,7 +121,7 @@ def fig2(summary, boot, pub, width_mm=80, height_mm=41):
     ax.grid(axis="x", color=GRID, lw=0.5)
     ax.set_axisbelow(True)
     fig.subplots_adjust(left=0.215, right=0.985, bottom=0.21, top=0.985)
-    fig.savefig(OUT / "fig2_gap_forest.svg")
+    fig.savefig(OUT / "fig2_gap_forest.svg", metadata=SVG_META)
     plt.close(fig)
 
 

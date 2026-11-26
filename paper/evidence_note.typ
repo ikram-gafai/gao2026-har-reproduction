@@ -33,7 +33,7 @@
     #v(0.3em)
     #text(size: 10pt)[Ikram Gafai]
     #v(0.06em)
-    #text(size: 8pt)[25 November 2026 #h(0.4em)·#h(0.4em) Code, data checks and outputs: #text(fill: rgb("#555555"))[\[repository URL to be added\]] #h(0.4em)·#h(0.4em) commits `ab93dfe1` (protocol), `2678acad` (code), `be86b6d2` (results)]
+    #text(size: 8pt)[25 November 2026 #h(0.4em)·#h(0.4em) #link("https://github.com/ikram-gafai/gao2026-har-reproduction")[github.com/ikram-gafai/gao2026-har-reproduction] #h(0.4em)·#h(0.4em) commits `ab93dfe1` (protocol), `2678acad` (code), `be86b6d2` (results)]
   ]
   #v(0.3em)
   #block(inset: (x: 1.2em), width: 100%)[
