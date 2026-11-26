@@ -1,8 +1,8 @@
 # Results
 
 **Provenance:**
-- Produced by `python -m har_repro.cli run-experiments` at commit `ca2b88017070d0bdbbbfb02129b7ffc60427edf3` (recorded in `manifest.json`), on 25 Nov 2026.
-- The pre-registered protocol was frozen at commit `e14633759ae9a82b51617e70fd2613ff2059901e`.
+- Produced by `python -m har_repro.cli run-experiments` on 25 Nov 2026 at the implementation commit now identified as `2678acadd135a4bc751a4c32e1d279976b2a3c51`. `manifest.json` records its original ID `ca2b8801…`; the file tree is identical (see Provenance in the main README).
+- The pre-registered protocol was frozen at commit `ab93dfe16baa189523916476288cfe56fe4cc406` (original ID `e1463375`).
 
 All files are machine-generated and have not been edited by hand. `python -m har_repro.cli verify-results` re-derives the metrics and summaries from the saved predictions and checks them against these files.
 
@@ -18,7 +18,7 @@ All files are machine-generated and have not been edited by hand. `python -m har
 | `summary/bootstrap.json` | Paired participant-level bootstrap for the **seed-2026 model pair** (10,000 replicates, seed 1729) |
 | `summary/decision.json` | Pre-registered outcome category and the supplementary five-seed-mean classification |
 | `repeatability/` | Fresh-process re-runs of both primary models at seed 2026, and the bitwise comparison |
-| `data_validation/data_validation.json` | Phase 1 structural data checks |
+| `data_validation/data_validation.json` | Structural data checks (written before any model was fitted) |
 
 **Run identifiers:**
 - Primary: `full561__seedN` and `compact100-X__seedN`.

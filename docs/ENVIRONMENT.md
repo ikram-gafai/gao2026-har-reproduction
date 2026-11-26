@@ -2,7 +2,7 @@
 
 ## Software
 
-The direct dependencies are pinned in `requirements.txt` and `pyproject.toml`. The full resolved set is in `requirements-lock.txt`.
+The direct dependencies are pinned in `pyproject.toml`. The full resolved set is in `requirements-lock.txt`. The evidence-note build uses a separate environment, `paper/requirements-paper.txt`.
 
 | Component | Version |
 |---|---|

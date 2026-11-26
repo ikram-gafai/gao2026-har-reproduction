@@ -1,5 +1,6 @@
 # Environments
 .venv/
+.venv-*/
 venv/
 env/
 __pycache__/
@@ -18,7 +19,6 @@ dist/
 # Private / non-public material must never enter this repository
 private/
 *CONFIDENTIAL*
-*assessment*brief*
 
 # OS / editor
 .DS_Store
@@ -31,3 +31,10 @@ desktop.ini
 results/**/model.json
 # Local console logs contain machine-specific absolute paths; timings are kept in run_info.json
 results/logs/
+.venv-paper/
+
+# Rendered preview of the evidence note (re-created by paper/build_note.py)
+paper/*_preview.png
+
+# Optional local re-run of the experiment (README section 4)
+rerun_results/

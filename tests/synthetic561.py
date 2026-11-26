@@ -1,4 +1,4 @@
-"""Synthetic dataset in the official UCI HAR file layout with 561 columns (for Phase 2 implementation tests).
+"""Synthetic dataset in the official UCI HAR file layout with 561 columns (for experiment-pipeline tests).
 
 Feature names at the mapped compact indices are the real S2 names (taken from the committed mapping manifest),
 so the runner's name cross-check is exercised. Values are random with a class-dependent signal.

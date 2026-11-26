@@ -3,7 +3,7 @@
     python -m har_repro.cli prepare-data [--local-archive PATH]
     python -m har_repro.cli build-mapping [--check]
     python -m har_repro.cli validate-data
-    python -m har_repro.cli run-experiments          (Phase 2: all pre-registered runs)
+    python -m har_repro.cli run-experiments          (all pre-registered runs)
     python -m har_repro.cli run-one --model M [--variant V] --seed N --out DIR
     python -m har_repro.cli summarize
     python -m har_repro.cli verify-results [--refit RUN_ID]
@@ -155,7 +155,7 @@ def cmd_validate_data(args: argparse.Namespace) -> int:
     return 0
 
 
-# ------------------------------------------------------------------------------------------ Phase 2 commands
+# ------------------------------------------------------------------------------------------ experiment commands
 def load_dataset(args: argparse.Namespace):
     """Load the dataset; verified against configured SHA-256 unless --allow-unverified-data (tests only)."""
     from .data.acquire import IntegrityError
@@ -269,7 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     c = sub.add_parser("validate-data", help="write results/data_validation/data_validation.json")
     c.set_defaults(func=cmd_validate_data)
 
-    r = sub.add_parser("run-experiments", help="Phase 2: all pre-registered runs, summary, bootstrap, repeatability")
+    r = sub.add_parser("run-experiments", help="all pre-registered runs, summary, bootstrap, repeatability")
     _add_data_args(r)
     r.add_argument("--results-dir", type=Path, default=None)
     r.add_argument("--no-sensitivity", action="store_true", help="skip the exploratory Y/Z mapping runs")

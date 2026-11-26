@@ -1,0 +1,16 @@
+# Evidence-note build environment (separate from the analysis environment in requirements-lock.txt).
+# Python 3.11. Create:  python -m venv .venv-paper  then install with:  python -m pip install -r paper/requirements-paper.txt
+# Build (repository root, paper environment active):  python paper/build_note.py ; audit:  python paper/check_numbers.py
+contourpy==1.3.3
+cycler==0.12.1
+fonttools==4.69.1
+kiwisolver==1.5.1
+matplotlib==3.11.2
+numpy==2.4.6
+packaging==26.4
+pillow==13.0.0
+pyparsing==3.3.3
+pypdf==7.1.1
+python-dateutil==4.0.0
+typst==0.15.2
+tzdata==2026.6
