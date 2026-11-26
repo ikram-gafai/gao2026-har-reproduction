@@ -138,7 +138,7 @@ src/       har_repro package: data acquisition and loading, mapping, training, e
 tests/     80 tests (synthetic implementation checks and structural checks on the real data)
 results/   manifest, 20 saved runs (predictions, probabilities, metrics, configurations), summaries, repeatability
 paper/     evidence note (PDF and Typst source), figure and build scripts, numerical audit
-docs/      protocol, feature-mapping investigation, data provenance, environment
+docs/      protocol, feature-mapping investigation, data provenance, environment, commit provenance
 ```
 
 ## Source, provenance, and license
@@ -146,12 +146,4 @@ docs/      protocol, feature-mapping investigation, data provenance, environment
 - **Paper:** Gao, H. et al. (2026). [*Compact and Explainable Human Activity Recognition with Boruta-RFE Feature Selection and SHAP Interpretation*](https://doi.org/10.3390/app162010046). *Applied Sciences* 16(20), 10046. No author-released implementation was identified in the documented search.
 - **Dataset:** Reyes-Ortiz, J. et al. (2013). [Human Activity Recognition Using Smartphones](https://doi.org/10.24432/C54S4K), UCI Machine Learning Repository, **CC BY 4.0**. Data are downloaded, not redistributed.
 - **Code:** [MIT license](LICENSE). The paper's Supplementary Table S2 is attributed to its authors (CC BY 4.0).
-- **Protocol / code / results commits:** [protocol](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/ab93dfe16baa189523916476288cfe56fe4cc406), [implementation](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/2678acadd135a4bc751a4c32e1d279976b2a3c51), [saved results](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/be86b6d2ad4c1673cbbd6864377e413d8272e373). The original local commit identifiers were recreated **before first publication** to correct author metadata, with the original file trees and timestamps preserved; the saved manifest still references the original implementation identifier. This is disclosed here so the provenance chain can be audited rather than silently rewritten.
-
-  | Commit | Original identifier | File tree (unchanged) |
-  |:--|:--|:--|
-  | `ab93dfe1` protocol | `e14633759ae9a82b51617e70fd2613ff2059901e` | `ad4a3e82206f0593669a7556c950a91d6c9cfc58` |
-  | `2678acad` implementation | `ca2b88017070d0bdbbbfb02129b7ffc60427edf3` (cited in `results/manifest.json`) | `c798fc82ee8eb64d45a9c63a16d6fea51e0cca01` |
-  | `be86b6d2` saved results | `6039ca6b1bfe78c8dd47cff21943c8037cd10517` | `9fd9c4cf357759a40ccda3809a90f529012e8ea5` |
-
-  To confirm the implementation is unchanged, check that `git rev-parse 2678acad^{tree}` prints `c798fc82ee8eb64d45a9c63a16d6fea51e0cca01`.
+- **Provenance:** [protocol](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/ab93dfe16baa189523916476288cfe56fe4cc406), [implementation](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/2678acadd135a4bc751a4c32e1d279976b2a3c51) and [saved-results](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/be86b6d2ad4c1673cbbd6864377e413d8272e373) commits. Before first publication, these commits were recreated to correct author metadata; file contents and timestamps are unchanged. See [docs/PROVENANCE.md](docs/PROVENANCE.md) for the original identifiers, which `results/manifest.json` still cites, and how to verify them.
