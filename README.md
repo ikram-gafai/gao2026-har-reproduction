@@ -1,58 +1,61 @@
-# Reproducing Gao et al. (2026): the accuracy cost of a 100-feature HAR representation
+# Reproducing Gao et al. (2026): how much accuracy does a compact HAR model lose?
 
-This is an independent, pre-registered reproduction of the subject-independent accuracy cost reported for replacing all 561 engineered UCI HAR features with a published 100-feature subset in XGBoost activity recognition (Gao et al., *Applied Sciences*, 2026).
+**Ikram Gafai** · Independent ML reproduction · UCI Human Activity Recognition · XGBoost
 
-### **[Read the Evidence Note (PDF)](paper/evidence_note.pdf)**
+Gao et al. report that replacing **561 engineered features with 100** (an **82.17% reduction in input columns**) changes subject-independent activity-recognition accuracy from **95.55% to 93.89%**. I chose this result because compact representations could matter in continuous activity sensing, and the public, subject-disjoint dataset makes the numerical claim independently testable. I refitted the two published final XGBoost configurations to see whether the reported gap survives an implementation from scratch.
 
-The one-page scientific evidence note covers:
-- the research question and why this paper was chosen;
-- the three main methodological decisions, each with the alternative not chosen;
-- the measured results against the published ones, with their uncertainty and limitations;
-- the proposed next experiment.
+**Main finding.** The direction and approximate size of the reported gap reproduce: **1.66 percentage points in the paper versus 1.74 ± 0.38 pp across my five predefined training seeds**. But the magnitude is conditional on an unresolved ambiguity in the published feature names, and the two model configurations differ in hyperparameters as well as feature count.
 
-Editable Typst source: [`paper/evidence_note.typ`](paper/evidence_note.typ). Build steps are in [Rebuild the evidence note](#5-rebuild-the-evidence-note).
+**[Read the one-page evidence note (PDF)](paper/evidence_note.pdf)** · [Editable source](paper/evidence_note.typ) · [Experiment protocol](docs/PROTOCOL.md) · [Saved results](results/summary/results_table.md)
 
-## Results summary
+## Results, not just a headline number
 
-| Quantity | Published | This work, seed 2026 (reference) | This work, five seeds (mean ± SD) |
-|---|---:|---:|---:|
-| Full-561 accuracy | 95.55% (2816/2947) | 95.25% (2807/2947) | 95.44 ± 0.16% |
-| Compact-100 accuracy (X-first) | 93.89% (2767/2947) | 94.16% (2775/2947) | 93.70 ± 0.27% |
-| Δ, full − compact | +1.66 pp | +1.09 pp | +1.74 ± 0.38 pp |
-| 95% participant-bootstrap CI of Δ | [+0.49, +3.18] | [+0.29, +2.11] | — |
-| Full-561 macro-F1 | 0.9550 | 0.9519 | 0.9539 |
-| Compact-100 macro-F1 | 0.9384 | 0.9413 | 0.9365 |
+<p align="center"><img src="paper/fig1_seed_accuracy.svg" width="850" alt="Full and compact XGBoost accuracies across five predefined seeds, with published reference lines."></p>
 
-**Reading the table:**
-- The bootstrap CI applies **only to the seed-2026 model pair**. Seed-to-seed variation is the SD.
-- Under the pre-registered criterion, the agreement is *Strong*: both reference-seed accuracies are within ±1.0 pp of the published values, and Δ > 0 lies within ±1.0 pp of +1.66 pp. The five-seed means meet the same criterion.
-- This is a descriptive label, not an equivalence test.
-- All published values lie inside the five-seed ranges. Per-seed values are in [results/summary/results_table.md](results/summary/results_table.md).
+*Figure 1. Official test accuracy for seeds 2026–2030; the bars at the right are five-seed means. Dashed lines are the published accuracies, not additional fitted models. Seed 2026 was declared as the reference before training.*
 
-**Exploratory mapping sensitivity** (not part of the primary analysis):
+<p align="center"><img src="paper/fig2_gap_forest.svg" width="790" alt="Full-minus-compact accuracy gap: published and reproduced participant bootstrap confidence intervals and individual seed gaps."></p>
 
-| Compact-100 mapping | Accuracy (five seeds) | Mean Δ |
-|---|---:|---:|
-| X-first (primary) | 93.70 ± 0.27% | +1.74 pp |
-| Y axis | 93.97 ± 0.10% | +1.47 pp |
-| Z axis | 94.29 ± 0.12% | +1.15 pp |
+*Figure 2. Full-minus-compact accuracy gap. The two 95% confidence intervals are based on participant-level resampling; our interval covers the seed-2026 pair only. The five-seed mean has **no** bootstrap confidence interval.*
 
-Δ is positive in all 15 compact runs. Its size depends on the mapping.
+| Official held-out test set (2,947 windows) | Gao et al. (2026) | My reference seed, 2026 | Five seeds, mean ± SD |
+|:--|--:|--:|--:|
+| Full XGBoost, 561 features | 95.55% | 95.25% | **95.44 ± 0.16%** |
+| Compact XGBoost, 100 named features | 93.89% | 94.16% | **93.70 ± 0.27%** |
+| **Full − compact gap** | **+1.66 pp** | **+1.09 pp** | **+1.74 ± 0.38 pp** |
+| 95% CI of the gap | [+0.49, +3.18] pp | [+0.29, +2.11] pp | Not computed |
 
-## Installation, reproduction and verification
+In the reference run, the full model classified **2,807/2,947** windows correctly and the compact model **2,775/2,947**. Across all five seeds, the gap remained positive (**+1.09 to +2.07 pp**). This meets the numerical-agreement criterion fixed in the [protocol](docs/PROTOCOL.md), but it is **not a statistical-equivalence result**. Five seeds measure limited training variability; the bootstrap interval instead resamples the nine test participants for the predeclared reference pair.
 
-**Requirements:**
-- Python 3.11 (the reported run used 3.11.3).
-- Git, because `run-experiments` records and checks the commit.
-- About 1 GB of free disk space for the environments and the extracted dataset.
-- Internet access for the first data download.
-- A CPU is enough: training uses one thread and no GPU.
+## The part that was not straightforward
 
-All commands run from the repository root. The commands differ between shells only when creating and activating the environments; every other step is identical in both.
+**The first obstacle appeared while mapping the supplement back to the dataset, before training.** The authors publish 100 feature *names*, not 100 unambiguous column indices. Ninety-one map to one UCI HAR column; nine `bandsEnergy` names each match **three axis-specific columns**. There are consequently **3⁹ = 19,683 possible mappings**, and the paper does not identify the nine choices. Selecting whichever mapping scored best on the official test set would contaminate the evaluation.
 
-### 1. Environment
+I fixed the **first occurrence (X-axis) convention before training**, then reported whole-block Y- and Z-axis alternatives as *exploratory sensitivity checks*, not competing models selected for the headline:
 
-Linux / macOS (bash or zsh):
+| Compact mapping | Five-seed compact accuracy, mean ± SD | Full − compact gap, mean |
+|:--|--:|--:|
+| **X-first — predefined primary** | **93.70 ± 0.27%** | **+1.74 pp** |
+| Y-axis block — exploratory | 93.97 ± 0.10% | +1.47 pp |
+| Z-axis block — exploratory | 94.29 ± 0.12% | +1.15 pp |
+
+The gap stays positive in all **15 compact-model runs**, but its size changes materially. I cannot claim that X-first reproduces the authors' actual selected columns. The mapping audit also found **five numerically identical feature pairs** within the 100 named inputs, leaving 95 distinct feature vectors; that matters when interpreting feature importance. See [the index-level investigation](docs/FEATURE_MAPPING.md).
+
+**Another limitation is built into the published comparison itself:** the full and compact models use **400 versus 300 boosting rounds**, and `colsample_bytree` **1.0 versus 0.8**. The experiment reproduces the reported *configuration-level* comparison, **not a causal ablation in which feature count is the only variable**.
+
+## What I chose, and what I did not
+
+**1. Refit the published final configurations.** I chose this narrower, numerically testable reproduction instead of reimplementing the entire Boruta → RFE search with unpublished participant-fold assignments. This isolates the published classifier comparison, but does **not** verify that an independent feature-selection run recovers the authors' subset. The original SHAP analysis and hyperparameter search are also outside scope.
+
+**2. Resolve missing feature indices before looking at scores.** I declared X-first and ascending original-column order in advance rather than picking one of the mappings on test accuracy. The Y/Z experiments probe sensitivity; they cannot identify the authors' intended mapping.
+
+**3. Treat participants, not windows, as the uncertainty unit.** UCI HAR windows overlap by 50% and multiple observations come from each person. I retained the official **21-train / 9-test participant-disjoint split**, trained with five fixed seeds, and calculated a paired **10,000-replicate participant bootstrap** for the seed-2026 model pair. A window-level bootstrap would understate dependence; a single seed alone would hide training variability.
+
+## Reproduce and audit the evidence
+
+The project needs **Python 3.11**, Git, Internet access for the public dataset download, and a CPU; there is no GPU requirement. The reported run used **Windows 11, AMD Ryzen 7 8845HS, 15.2 GB RAM, and one XGBoost training thread**. Python 3.11.3 and XGBoost 3.2.0 were used, with exact-greedy trees and `base_score=0.5` (the paper used **R XGBoost 1.7.7.1**). Dependencies are pinned in [`requirements-lock.txt`](requirements-lock.txt).
+
+**Install — Linux/macOS:**
 
 ```bash
 git clone https://github.com/ikram-gafai/gao2026-har-reproduction.git
@@ -63,7 +66,7 @@ python -m pip install -r requirements-lock.txt
 python -m pip install -e . --no-deps
 ```
 
-Windows (PowerShell):
+**Install — Windows PowerShell:**
 
 ```powershell
 git clone https://github.com/ikram-gafai/gao2026-har-reproduction.git
@@ -74,58 +77,32 @@ python -m pip install -r requirements-lock.txt
 python -m pip install -e . --no-deps
 ```
 
-If PowerShell blocks the activation script, run `Set-ExecutionPolicy -Scope Process RemoteSigned` once in that session.
+If PowerShell blocks activation, run `Set-ExecutionPolicy -Scope Process RemoteSigned` in that terminal.
 
-### 2. Data
+**Get the data and verify the committed experiment** (same commands in either shell):
 
 ```bash
 python -m har_repro.cli prepare-data
 python -m har_repro.cli build-mapping --check
 python -m har_repro.cli validate-data
-```
-
-- `prepare-data` downloads the archive, verifies its SHA-256 and extracts it into `./data`.
-  - It tries three sources in order: the official UCI legacy path, the official current URL, then an Internet Archive capture of the official URL. A file is accepted only if its SHA-256 matches.
-  - `--local-archive PATH` accepts an existing official ZIP if its checksum matches.
-  - The `HAR_DATA_DIR` environment variable changes the data location.
-- `build-mapping --check` requires the committed feature mapping to regenerate exactly from `features.txt`.
-- `validate-data` writes a structural report and fits no model. It rewrites `results/data_validation/data_validation.json`; on a correct dataset, only the `generated_utc` timestamp changes.
-
-### 3. Verify the committed evidence
-
-```bash
 python -m pytest
 python -m har_repro.cli verify-results
+```
+
+The data downloader tries the two official UCI HAR endpoints first and, only if both fail, an Internet Archive capture of the official archive. Every download must match a frozen **SHA-256**, and the extracted files are checked against their own checksums. `verify-results` reconstructs metrics for **all 20 saved fits** from test predictions and probabilities, checks subject IDs and labels, and regenerates the experiment summary, participant bootstrap, and numerical-agreement decision. **80 tests** passed in a fresh checkout. `validate-data` may update only the timestamp in a tracked validation report. [Data provenance](docs/DATA.md) · [Run-file guide](results/README.md)
+
+**Check deterministic refitting** (optional; the full model takes several minutes on one thread):
+
+```bash
 python -m har_repro.cli verify-results --refit compact100-X__seed2026
 python -m har_repro.cli verify-results --refit full561__seed2026
 ```
 
-`pytest` runs the 80 tests. `verify-results` audits the committed outputs in a few seconds:
-- it recomputes every run's metrics from the saved predictions;
-- it checks the labels and participant IDs against the official test split;
-- it checks that the saved predictions agree with the saved probabilities;
-- it regenerates the summary, the 10,000-replicate bootstrap, the outcome decision and the results table, and requires them to match the committed files byte for byte;
-- it checks the repeatability record.
+Both reference models reproduced their saved probabilities **bit for bit** in the reported environment. For a complete new set of 20 fits, use `python -m har_repro.cli run-experiments --results-dir rerun_results`. The target folder must be new; no published result files need to be overwritten.
 
-`--refit RUN_ID` retrains that run from the public data and requires bit-identical probabilities. It took about 40 s for the compact model and about 6.5 min for the full model on one thread.
+**Rebuild the note and figures** in a separate paper environment (run from the repository root):
 
-### 4. Re-run the full experiment (optional)
-
-```bash
-python -m har_repro.cli run-experiments --results-dir rerun_results
-```
-
-This runs all 20 pre-registered fits:
-- full and compact models on seeds 2026–2030;
-- the exploratory Y and Z mappings on the same seeds.
-
-It then writes the summary, bootstrap and decision to `rerun_results/`, and runs a fresh-process repeatability check. It refuses to start on unverified data, with uncommitted changes to the source code, configurations or tests, or if the target folder already holds runs. On the reference machine, fit times were 313–386 s for each full model and 32–52 s for each compact model, all on one thread (`fit_seconds` in each `run_info.json`).
-
-### 5. Rebuild the evidence note
-
-The note uses a separate environment with matplotlib, typst and pypdf. Typst is installed from PyPI, so no LaTeX installation is needed. Run this in a new terminal from the repository root.
-
-Linux / macOS:
+Linux/macOS:
 
 ```bash
 python3.11 -m venv .venv-paper
@@ -135,7 +112,7 @@ python paper/build_note.py
 python paper/check_numbers.py
 ```
 
-Windows (PowerShell):
+Windows PowerShell:
 
 ```powershell
 py -3.11 -m venv .venv-paper
@@ -145,127 +122,36 @@ python paper/build_note.py
 python paper/check_numbers.py
 ```
 
-- `build_note.py` regenerates both figures from `results/summary/` and compiles `paper/evidence_note.typ` into `paper/evidence_note.pdf`. It checks that the result is one A4 page under 10 MB.
-- `check_numbers.py` requires every number in the PDF to trace to the committed results, the frozen configuration or the paper.
+The build uses the committed results to regenerate both SVG plots and the one-page Typst PDF. The number audit checks every value reported in the PDF.
 
-## Methodology
+## What the evidence does not establish
 
-### Paper reproduced
+This is a reproduction of the **two final XGBoost classifiers**, not the original **Boruta/RFE selection, cross-validation search, or SHAP explanations**. Nine feature indices remain unresolved; 100 named features include five duplicate pairs; the Python and R implementations cannot be assumed bit-equivalent. Only **nine people** appear in the held-out test partition, and the dataset consists of controlled laboratory activities, not free-living or clinical monitoring. In particular, reduced input dimensionality does **not** by itself establish reduced end-to-end inference cost.
 
-> H. Gao, N. Wang, Z. Wan, R. Qu, Y. Wang, L. Xu, X. Meng. *Compact and Explainable Human Activity Recognition with Boruta-RFE Feature Selection and SHAP Interpretation.* Applied Sciences 16(20):10046, 2026. https://doi.org/10.3390/app162010046
-
-The paper reports results on the official subject-disjoint UCI HAR test set:
-
-| Model | Test accuracy |
-|---|---:|
-| XGBoost, all 561 engineered features | 95.55% |
-| XGBoost, published 100-feature subset | 93.89% |
-| Difference, Δ = Acc<sub>full</sub> − Acc<sub>compact</sub> | **+1.66 percentage points (pp)** |
-
-The subset removes 82.17% of the input columns. This repository refits both published final configurations from the public data and measures that comparison under a protocol committed before any model was fitted.
-
-**Why this paper:**
-- it was published in October 2026;
-- its data are public and de-identified;
-- its central comparison is reported numerically, with the final hyperparameters and the 100 feature names (Supplementary Table S2);
-- a documented search found no author-released code.
-
-### Scope
-
-**Reproduced:**
-- the final full-feature and compact-feature XGBoost classifiers, using the published configurations;
-- their test-accuracy comparison on the official split;
-- five pre-declared training seeds;
-- a paired participant-level bootstrap of Δ.
-
-**Not reproduced:**
-- Boruta filtering and recursive feature elimination (RFE), with their grouped cross-validation;
-- the original hyperparameter search;
-- the SHAP analysis.
-
-Agreement here therefore concerns the published classifiers built on the published feature list. It does not show that the selection procedure would recover that list.
-
-### Data and protocol
-
-- **Dataset:** UCI HAR, Reyes-Ortiz et al., [doi:10.24432/C54S4K](https://doi.org/10.24432/C54S4K), CC BY 4.0. It covers 30 adults wearing a waist-mounted smartphone, six activities, and 2.56 s windows with 50% overlap, each described by 561 precomputed features.
-- **Split:** the official participant-disjoint split, with 7,352 training windows from 21 participants and 2,947 test windows from 9 participants. The test set is never used for fitting, tuning or any mapping decision.
-- **Integrity:** archives and extracted files are checked against SHA-256 values ([docs/DATA.md](docs/DATA.md)).
-- **Models:** native `xgboost.train` with exact greedy splits, `base_score = 0.5`, one thread, `multi:softprob` and six classes.
-
-  | | Full-561 | Compact-100 |
-  |---|---:|---:|
-  | Input columns | 561 | 100 (published S2 names) |
-  | Boosting rounds | 400 | 300 |
-  | `max_depth` / `eta` / `subsample` | 3 / 0.1 / 0.8 | 3 / 0.1 / 0.8 |
-  | `colsample_bytree` | 1.0 | 0.8 |
-
-  The two published configurations differ in more than their inputs, so Δ is a comparison of the published configurations. It does not isolate the effect of removing features.
-- **Nine ambiguous feature names:**
-  - Nine S2 names (`bandsEnergy()` bands 1–8, 1–16 and 1–24 of fBodyAcc, fBodyAccJerk and fBodyGyro) occur three times in `features.txt`, once per sensor axis. No indices were published.
-  - The pre-registered primary mapping uses the first occurrence (X axis). Mappings to Y and Z are reported only as exploratory sensitivity analyses.
-  - X-first is a convention, not the authors' confirmed columns ([docs/FEATURE_MAPPING.md](docs/FEATURE_MAPPING.md)).
-- **Seeds and uncertainty:**
-  - Seeds 2026–2030 were declared in advance, with 2026 as the reference.
-  - A paired participant-level bootstrap resamples the 9 test participants with their windows pooled (10,000 replicates, seed 1729).
-  - The full protocol is in [docs/PROTOCOL.md](docs/PROTOCOL.md) and is machine-readable in [configs/experiment.toml](configs/experiment.toml).
-
-## Limitations
-
-1. **Mapping:** the compact input depends on the X-first convention for nine names.
-2. **Identical columns:** five pairs among the 100 selected columns are numerically identical (95 distinct inputs), so SHAP attributions between those pairs are not identifiable.
-3. **Implementation:** Python xgboost 3.2.0 approximates the authors' R xgboost 1.7.7.1, whose tree method and random state were not reported. Random draws cannot be matched across languages.
-4. **Seed variation:** Δ ranges from +1.09 to +2.07 pp across the five seeds.
-5. **Sample size:** nine test participants make every interval coarse.
-6. **Data:** UCI HAR is a controlled laboratory dataset and supports no inference about free-living or clinical use.
-7. **Confounded comparison:** the two configurations differ in boosting rounds and column subsampling as well as in their inputs.
+If I had one more week, I would run **nested participant-level feature selection**, keeping every selection step inside the training folds, compare Boruta → RFE against simpler selectors, and refit full and compact representations with **matched XGBoost hyperparameters**. I would then examine the gap per held-out participant and selected-feature stability—not just another aggregate accuracy number.
 
 ## Repository layout
 
 ```
-configs/      experiment.toml (frozen protocol parameters) · data_sources.toml (URLs, SHA-256)
-              compact100_mapping.json (S2 names -> column indices) · S2 supplementary table (CC BY 4.0)
-src/har_repro/
-  cli.py                  prepare-data | build-mapping | validate-data | run-experiments | run-one | summarize | verify-results
-  data/                   checksum-verified acquisition and safe extraction; official 561-feature loader
-  features/mapping.py     S2 name -> column mapping (ascending original-index order)
-  models/                 frozen config -> xgboost parameters; training on the training partition only
-  evaluation/             metrics, paired participant bootstrap, pre-registered outcome rule
-  experiments/            run plan, manifest, summary, repeatability check, results audit
-tests/        80 tests: synthetic implementation tests and structural checks on the real data
-results/      manifest.json · runs/ (20 runs: predictions, probabilities, metrics, configs) · summary/
-              repeatability/ · data_validation/ (see results/README.md)
-paper/        evidence_note.pdf + evidence_note.typ (Typst source) · make_figures.py · build_note.py
-              check_numbers.py (audits every number in the PDF) · requirements-paper.txt
-docs/         PROTOCOL.md · FEATURE_MAPPING.md · DATA.md · ENVIRONMENT.md
+configs/   frozen experiment parameters, data checksums, feature mapping, the paper's Supplementary Table S2
+src/       har_repro package: data acquisition and loading, mapping, training, evaluation, experiment runner, audit
+tests/     80 tests (synthetic implementation checks and structural checks on the real data)
+results/   manifest, 20 saved runs (predictions, probabilities, metrics, configurations), summaries, repeatability
+paper/     evidence note (PDF and Typst source), figure and build scripts, numerical audit
+docs/      protocol, feature-mapping investigation, data provenance, environment
 ```
 
-## Environment of the reported run
+## Source, provenance, and license
 
-- **Hardware:** AMD Ryzen 7 8845HS with 16 logical CPUs (one used for training) and 15.2 GB RAM, running Windows 11. CPU only.
-- **Software:** Python 3.11.3, xgboost 3.2.0, numpy 2.4.6, pandas 3.1.1, scikit-learn 1.9.1 and scipy 1.17.1. The full lockfile is [`requirements-lock.txt`](requirements-lock.txt); see also [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md).
+- **Paper:** Gao, H. et al. (2026). [*Compact and Explainable Human Activity Recognition with Boruta-RFE Feature Selection and SHAP Interpretation*](https://doi.org/10.3390/app162010046). *Applied Sciences* 16(20), 10046. No author-released implementation was identified in the documented search.
+- **Dataset:** Reyes-Ortiz, J. et al. (2013). [Human Activity Recognition Using Smartphones](https://doi.org/10.24432/C54S4K), UCI Machine Learning Repository, **CC BY 4.0**. Data are downloaded, not redistributed.
+- **Code:** [MIT license](LICENSE). The paper's Supplementary Table S2 is attributed to its authors (CC BY 4.0).
+- **Protocol / code / results commits:** [protocol](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/ab93dfe16baa189523916476288cfe56fe4cc406), [implementation](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/2678acadd135a4bc751a4c32e1d279976b2a3c51), [saved results](https://github.com/ikram-gafai/gao2026-har-reproduction/commit/be86b6d2ad4c1673cbbd6864377e413d8272e373). The original local commit identifiers were recreated **before first publication** to correct author metadata, with the original file trees and timestamps preserved; the saved manifest still references the original implementation identifier. This is disclosed here so the provenance chain can be audited rather than silently rewritten.
 
-## Provenance
+  | Commit | Original identifier | File tree (unchanged) |
+  |:--|:--|:--|
+  | `ab93dfe1` protocol | `e14633759ae9a82b51617e70fd2613ff2059901e` | `ad4a3e82206f0593669a7556c950a91d6c9cfc58` |
+  | `2678acad` implementation | `ca2b88017070d0bdbbbfb02129b7ffc60427edf3` (cited in `results/manifest.json`) | `c798fc82ee8eb64d45a9c63a16d6fea51e0cca01` |
+  | `be86b6d2` saved results | `6039ca6b1bfe78c8dd47cff21943c8037cd10517` | `9fd9c4cf357759a40ccda3809a90f529012e8ea5` |
 
-| Commit | Content | Original commit ID | Tree (identical) |
-|---|---|---|---|
-| `ab93dfe16baa189523916476288cfe56fe4cc406` | Pre-registration: protocol, frozen configuration, data pipeline and mapping, committed before any model was fitted | `e14633759ae9a82b51617e70fd2613ff2059901e` | `ad4a3e82206f0593669a7556c950a91d6c9cfc58` |
-| `2678acadd135a4bc751a4c32e1d279976b2a3c51` | Frozen implementation that produced the results | `ca2b88017070d0bdbbbfb02129b7ffc60427edf3` | `c798fc82ee8eb64d45a9c63a16d6fea51e0cca01` |
-| `be86b6d2ad4c1673cbbd6864377e413d8272e373` | Unedited experiment outputs and the audit command | `6039ca6b1bfe78c8dd47cff21943c8037cd10517` | `9fd9c4cf357759a40ccda3809a90f529012e8ea5` |
-
-**Original commit IDs:**
-- These three commits were re-created on 26 Nov 2026, before the repository was first published, to correct their author metadata.
-- Their file trees and timestamps are unchanged. Only the commit IDs differ.
-- `results/manifest.json` was written by the experiment run and is not edited, so it still cites the original implementation ID `ca2b8801`.
-- To confirm that the code is identical, check that `git rev-parse 2678acad^{tree}` prints `c798fc82ee8eb64d45a9c63a16d6fea51e0cca01`.
-
-Trained boosters (`results/runs/*/model.json`) are not committed. They can be re-created from the code and seeds.
-
-## Citation and licences
-
-**Paper:** H. Gao, N. Wang, Z. Wan, R. Qu, Y. Wang, L. Xu, X. Meng. Compact and explainable human activity recognition with Boruta-RFE feature selection and SHAP interpretation. *Applied Sciences* 16(20):10046, 2026. doi:[10.3390/app162010046](https://doi.org/10.3390/app162010046).
-
-**Dataset:** J. Reyes-Ortiz, D. Anguita, A. Ghio, L. Oneto, X. Parra. Human Activity Recognition Using Smartphones [dataset]. UCI Machine Learning Repository, 2013. doi:[10.24432/C54S4K](https://doi.org/10.24432/C54S4K).
-
-- **Code:** MIT ([LICENSE](LICENSE)).
-- **UCI HAR dataset:** CC BY 4.0, Reyes-Ortiz, Anguita, Ghio, Oneto and Parra. It is downloaded, not redistributed.
-- **Supplementary Table S2** (`configs/gao2026_supplementary_table_S2_100_features.csv`): © the authors of Gao et al. (2026), CC BY 4.0, from https://www.mdpi.com/article/10.3390/app162010046/s1.
+  To confirm the implementation is unchanged, check that `git rev-parse 2678acad^{tree}` prints `c798fc82ee8eb64d45a9c63a16d6fea51e0cca01`.
